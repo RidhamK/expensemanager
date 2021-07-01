@@ -1,22 +1,28 @@
-// new transactions
+// ignore_for_file: use_key_in_widget_constructors
+
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class NewTransaction extends StatefulWidget {
   final Function addTx;
-  NewTransaction(this.addTx);
+
+  const NewTransaction(this.addTx);
 
   @override
-  State<NewTransaction> createState() => _NewTransactionState();
+  _NewTransactionState createState() => _NewTransactionState();
 }
 
 class _NewTransactionState extends State<NewTransaction> {
-  final titleController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  DateTime _selectedDate = DateTime.now();
 
-  final amountCotroller = TextEditingController();
-
-  void submitData() {
-    final enteredTitle = titleController.text;
-    final enteredAmount = double.parse(amountCotroller.text);
+  void _submitData() {
+    if (_amountController.text.isEmpty) {
+      return;
+    }
+    final enteredTitle = _titleController.text;
+    final enteredAmount = double.parse(_amountController.text);
 
     if (enteredTitle.isEmpty || enteredAmount <= 0) {
       return;
@@ -25,35 +31,83 @@ class _NewTransactionState extends State<NewTransaction> {
     widget.addTx(
       enteredTitle,
       enteredAmount,
+      _selectedDate,
     );
+
     Navigator.of(context).pop();
+  }
+
+  void _presentDatePicker() {
+    showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2019),
+      lastDate: DateTime.now(),
+    ).then((pickedDate) {
+      if (pickedDate == null) {
+        return;
+      }
+      setState(() {
+        _selectedDate = pickedDate;
+      });
+    });
+    // print('...');
   }
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 5,
       child: Container(
+        padding: const EdgeInsets.all(10),
         child: Column(
-          children: [
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: <Widget>[
             TextField(
-              // onChanged: (value) {
-              //   titleInput = value;
+              decoration: const InputDecoration(labelText: 'Title'),
+              controller: _titleController,
+              onSubmitted: (_) => _submitData(),
+              // onChanged: (val) {
+              //   titleInput = val;
               // },
-              onSubmitted: (_) => submitData(),
-              controller: titleController,
-              decoration: InputDecoration(
-                labelText: 'Title',
+            ),
+            TextField(
+              decoration: const InputDecoration(labelText: 'Amount'),
+              controller: _amountController,
+              keyboardType: TextInputType.number,
+              onSubmitted: (_) => _submitData(),
+              // onChanged: (val) => amountInput = val,
+            ),
+            // ignore: sized_box_for_whitespace
+            Container(
+              height: 70,
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: Text(
+                      'Picked Date: ${DateFormat.yMd().format(_selectedDate)}',
+                    ),
+                  ),
+                  // ignore: deprecated_member_use
+                  FlatButton(
+                    textColor: Theme.of(context).primaryColor,
+                    child: const Text(
+                      'Choose Date',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    onPressed: _presentDatePicker,
+                  ),
+                ],
               ),
             ),
-            TextField(
-              decoration: InputDecoration(labelText: 'Amount'),
-              keyboardType: TextInputType.number,
-              controller: amountCotroller,
-            ),
             // ignore: deprecated_member_use
-            FlatButton(
-              onPressed: () => submitData(),
+            RaisedButton(
               child: const Text('Add Transaction'),
+              color: Theme.of(context).primaryColor,
+              textColor: Theme.of(context).textTheme.button!.color,
+              onPressed: _submitData,
             ),
           ],
         ),
