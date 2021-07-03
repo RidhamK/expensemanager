@@ -123,11 +123,53 @@ class _MyHomePageState extends State<MyHomePage> {
 
   bool _showChart = false;
 
-  @override
-  Widget build(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    final isLandscap = mediaQuery.orientation == Orientation.landscape;
-    final appbar = AppBar(
+  List<Widget> _buildLandscap(
+    MediaQueryData mediaQuery,
+    double appBarSize,
+    Widget txListWidget,
+  ) {
+    return [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('ShowChart'),
+          Switch(
+              value: _showChart,
+              onChanged: (val) {
+                setState(() {
+                  _showChart = val;
+                });
+              })
+        ],
+      ),
+      _showChart
+          ? Container(
+              height: (mediaQuery.size.height) * 0.7 -
+                  appBarSize -
+                  mediaQuery.padding.top,
+              child: Chart(_recentTransactions),
+            )
+          : txListWidget
+    ];
+  }
+
+  List<Widget> _buildPortraitContent(
+    MediaQueryData mediaQuery,
+    double appBarSize,
+    Widget txListWidget,
+  ) {
+    return [
+      Container(
+        height: (mediaQuery.size.height - appBarSize - mediaQuery.padding.top) *
+            0.3,
+        child: Chart(_recentTransactions),
+      ),
+      txListWidget
+    ];
+  }
+
+  PreferredSizeWidget buildAppBar() {
+    return AppBar(
       title: const Text(
         'Personal Expenses',
       ),
@@ -138,51 +180,39 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ],
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final isLandscap = mediaQuery.orientation == Orientation.landscape;
+    final PreferredSizeWidget appBar = buildAppBar();
+    final double appBarSize = appBar.preferredSize.height;
+
     final txListWidget = Container(
-      height: (mediaQuery.size.height) * 0.6 -
-          appbar.preferredSize.height -
-          mediaQuery.padding.top,
+      height:
+          (mediaQuery.size.height) * 0.6 - appBarSize - mediaQuery.padding.top,
       child: TransactionList(_userTransactions, _deleteTransaction),
     );
     return Scaffold(
-      appBar: appbar,
+      appBar: appBar,
       body: SingleChildScrollView(
         child: Column(
           // mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (isLandscap)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text('ShowChart'),
-                  Switch(
-                      value: _showChart,
-                      onChanged: (val) {
-                        setState(() {
-                          _showChart = val;
-                        });
-                      })
-                ],
+              ..._buildLandscap(
+                mediaQuery,
+                appBarSize,
+                txListWidget,
               ),
             if (!isLandscap)
-              Container(
-                height: ((mediaQuery.size.height) -
-                        (appbar.preferredSize.height) -
-                        mediaQuery.padding.top) *
-                    0.3,
-                child: Chart(_recentTransactions),
+              ..._buildPortraitContent(
+                mediaQuery,
+                appBarSize,
+                txListWidget,
               ),
-            if (!isLandscap) txListWidget,
-            if (isLandscap)
-              _showChart
-                  ? Container(
-                      height: (mediaQuery.size.height) * 0.7 -
-                          (appbar.preferredSize.height) -
-                          mediaQuery.padding.top,
-                      child: Chart(_recentTransactions),
-                    )
-                  : txListWidget
           ],
         ),
       ),
